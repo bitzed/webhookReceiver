@@ -55,25 +55,6 @@ Zoom will use this token to sign all webhook requests. The app will verify the s
 
 ---
 
-## 💻 Run Locally
-
-```bash
-npm start
-```
-
-Default port: `8080`  
-Test your server:
-
-```bash
-curl -X POST http://localhost:8080 \
-  -H "Content-Type: application/json" \
-  -H "x-zm-request-timestamp: 1234567890" \
-  -H "x-zm-signature: v0=mocked_signature" \
-  -d '{"event":"test","payload":{"data":"Hello!"}}'
-```
-
----
-
 ## ☁️ Deploy to Google Cloud Run
 
 Make sure you're logged in and your project is set:
