@@ -9,7 +9,8 @@ Built for easy deployment to **Google Cloud Run**, with **Docker** support inclu
 
 - Receives POST requests (e.g., from Zoom Webhooks)
 - Parses JSON body and logs to console
-- Lightweight and easy to extend
+- Zoom Webhook Signature validation supported (via secret token)
+- Lightweight and extensible
 - Ready for local use or Cloud Run deployment
 
 ---
@@ -29,18 +30,45 @@ cd webhookReceiver
 npm install
 ```
 
-### 3. Run locally
+### 3. Configure Environment
+
+Create a `.env` file in the root directory:
+
+```env
+ZOOM_WEBHOOK_SECRET=your_zoom_webhook_secret_token
+```
+
+---
+
+## 🔧 Set up Zoom Webhook (Zoom App Marketplace)
+
+1. Go to [Zoom App Marketplace](https://marketplace.zoom.us/)
+2. Create a new **Server-to-Server OAuth** app or **Webhook-only** app
+3. Navigate to the **Feature** tab
+4. Under **Event Subscriptions**, enable and:
+   - Set your endpoint URL (e.g., `https://your-cloudrun-url/`)
+   - Select events to subscribe (e.g., `meeting.summary_completed`)
+   - Copy the **Secret Token**
+5. Paste the token into `.env` as `ZOOM_WEBHOOK_SECRET`
+
+Zoom will use this token to sign all webhook requests. The app will verify the signature using HMAC-SHA256.
+
+---
+
+## 💻 Run Locally
 
 ```bash
 npm start
 ```
 
 Default port: `8080`  
-Send a test request:
+Test your server:
 
 ```bash
 curl -X POST http://localhost:8080 \
   -H "Content-Type: application/json" \
+  -H "x-zm-request-timestamp: 1234567890" \
+  -H "x-zm-signature: v0=mocked_signature" \
   -d '{"event":"test","payload":{"data":"Hello!"}}'
 ```
 
@@ -48,13 +76,13 @@ curl -X POST http://localhost:8080 \
 
 ## ☁️ Deploy to Google Cloud Run
 
-Make sure you are authenticated with `gcloud`, and your project is set:
+Make sure you're logged in and your project is set:
 
 ```bash
 gcloud config set project YOUR_PROJECT_ID
 ```
 
-Then build and deploy:
+Build and deploy:
 
 ```bash
 gcloud builds submit --tag gcr.io/YOUR_PROJECT_ID/webhook-receiver
@@ -65,21 +93,14 @@ gcloud run deploy webhook-receiver \
   --region asia-northeast1
 ```
 
-> 🔐 If you want to restrict access, consider setting up authentication and secret validation in `server.js`.
+After deployment, update the Zoom Webhook URL with your Cloud Run URL.
 
 ---
 
 ## 🛠 Customization
 
-You can add custom logic in `server.js` inside the `app.post('/')` route handler.
-
----
-
-## 🧪 Webhook Testing Tools
-
-- [RequestBin](https://requestbin.com/)
-- [Webhook.site](https://webhook.site/)
-- `curl` from CLI
+Webhook handling logic is in `server.js`.  
+Signature validation is based on Zoom’s [Webhook Verification Guide](https://developers.zoom.us/docs/api/rest/webhook/#validate-webhook-events).
 
 ---
 
@@ -88,6 +109,7 @@ You can add custom logic in `server.js` inside the `app.post('/')` route handler
 ```
 .
 ├── Dockerfile
+├── .env.example
 ├── package.json
 ├── server.js
 └── README.md
