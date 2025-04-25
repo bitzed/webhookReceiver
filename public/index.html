@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <title>Zoom Webhook Viewer</title>
+  <style>
+    body { font-family: monospace; background: #fafafa; padding: 1em; }
+    #status { margin-bottom: 1em; font-weight: bold; }
+    #json { white-space: pre-wrap; background: #eee; padding: 1em; border-radius: 5px; }
+
+    .summary {
+      background-color: #fff0f5;
+      border: 2px dashed #ff69b4;
+      padding: 15px;
+      border-radius: 12px;
+      margin: 15px 0;
+      font-size: 16px;
+      line-height: 1.5;
+    }
+    .summary strong {
+      color: #d6336c;
+    }
+  </style>
+</head>
+<body>
+  <div id="status">🔌 Connecting...</div>
+  <div>Connected clients: <span id="clients">0</span></div>
+  <h3>Latest Webhook Event:</h3>
+  <div id="json">(Waiting for webhook...)</div>
+
+  <script>
+    const status = document.getElementById('status');
+    const jsonDiv = document.getElementById('json');
+    const clientSpan = document.getElementById('clients');
+
+    const protocol = location.protocol === 'https:' ? 'wss' : 'ws';
+    const ws = new WebSocket(`${protocol}://${location.host}`);
+
+    ws.onopen = () => {
+      status.textContent = '✅ WebSocket Connected';
+    };
+
+    ws.onmessage = (event) => {
+      const msg = JSON.parse(event.data);
+
+      if (msg.type === 'client_count') {
+        clientSpan.textContent = msg.count;
+        console.log('Client count:', msg.count);
+
+      } else if (msg.type === 'webhook') {
+        jsonDiv.textContent = JSON.stringify(msg, null, 2);
+        console.log('Webhook event:', msg);
+
+      } else if (msg.type === 'summary') {
+        console.log('Summary event:', msg);
+        const summaryEl = document.createElement('div');
+        summaryEl.className = 'summary';
+        summaryEl.innerHTML = `
+          <strong>🌸 Hooray! You got new meeeting Summary!</strong><br>
+          <em>${msg.summary}</em><br>
+          <small>${new Date(msg.timestamp).toLocaleString()}</small>
+        `;
+        document.body.appendChild(summaryEl);
+      }
+    };
+  </script>
+</body>
+</html>
