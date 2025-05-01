@@ -30,6 +30,7 @@ app.use(express.json());
 app.use(express.static(publicPath));
 
 app.post('/webhook', async (req, res) => {
+  console.log(webhookToken);
   const timestamp = req.headers['x-zm-request-timestamp'];
   const signature = req.headers['x-zm-signature'];
   const rawBody = JSON.stringify(req.body);
