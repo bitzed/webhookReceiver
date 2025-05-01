@@ -8,6 +8,7 @@ const crypto = require('crypto');
 const app = express();
 const server = http.createServer(app);
 const wss = new WebSocketServer({ server });
+const clients = new Set();
 
 const webhookToken = process.env.WEBHOOK_TOKEN;
 const publicPath = path.join(__dirname, 'public');
@@ -30,7 +31,6 @@ app.use(express.json());
 app.use(express.static(publicPath));
 
 app.post('/webhook', async (req, res) => {
-  console.log(webhookToken);
   const timestamp = req.headers['x-zm-request-timestamp'];
   const signature = req.headers['x-zm-signature'];
   const rawBody = JSON.stringify(req.body);
