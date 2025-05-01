@@ -26,7 +26,6 @@ function broadcastClientCount() {
   clients.forEach(ws => ws.send(message));
 }
 
-//app.use(express.bodyParser.json());
 app.use(express.static(publicPath));
 
 app.post('/webhook', async (req, res) => {
