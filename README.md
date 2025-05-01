@@ -35,7 +35,7 @@ npm install
 Create a `.env` file in the root directory:
 
 ```env
-ZOOM_WEBHOOK_SECRET=your_zoom_webhook_secret_token
+WEBHOOK_TOKEN=your_zoom_webhook_secret_token
 ```
 
 ---
@@ -49,7 +49,7 @@ ZOOM_WEBHOOK_SECRET=your_zoom_webhook_secret_token
    - Set your endpoint URL (e.g., `https://your-cloudrun-url/`)
    - Select events to subscribe (e.g., `meeting.summary_completed`)
    - Copy the **Secret Token**
-5. Paste the token into `.env` as `ZOOM_WEBHOOK_SECRET`
+5. Paste the token into `.env` as `WEBHOOK_TOKEN`
 
 Zoom will use this token to sign all webhook requests. The app will verify the signature using HMAC-SHA256.
 
