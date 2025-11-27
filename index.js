@@ -4,6 +4,8 @@ const http = require('http');
 const { WebSocketServer } = require('ws');
 const path = require('path');
 const crypto = require('crypto');
+const dotenv = require('dotenv');
+dotenv.config();
 
 const app = express();
 const server = http.createServer(app);
@@ -27,31 +29,41 @@ function broadcastClientCount() {
   clients.forEach(ws => ws.send(message));
 }
 
-app.use(express.json());
+app.use(express.json({
+  verify: (req, res, buf) => {
+    req.rawBody = buf.toString();
+  }
+}));
 app.use(express.static(publicPath));
 
 app.post('/webhook', async (req, res) => {
-  const timestamp = req.headers['x-zm-request-timestamp'];
+  console.log('📬 Incoming Webhook Request:', JSON.stringify(req.body, null, 2));
+  const timestamp = req.headers['x-zm-request-timestamp'] || Date.now();
   const signature = req.headers['x-zm-signature'];
-  const rawBody = JSON.stringify(req.body);
-  const msg = `v0:${timestamp}:${rawBody}`;
+  console.log('🔑 Signature:', signature);
+  const rawBody = req.body;
+  const msg = `v0:${timestamp}:${req.rawBody}`;
   const hash = crypto.createHmac('sha256', webhookToken).update(msg).digest('hex');
   const expectedSig = `v0=${hash}`;
+  console.log('🔑 Expected Signature:', expectedSig);
 
   if (signature !== expectedSig) {
+    console.error('❌ Invalid signature');
     return res.status(200).json({ message: 'Invalid signature' });
   }
-
-  const event = req.body.event;
-  const eventBody = req.body.payload;
+  console.log('✅ Signature verified successfully');
+  const event = req.body.event ? req.body.event : undefined;
+  const eventBody = req.body.payload ? req.body.payload : req.body;
 
   if (event === 'endpoint.url_validation') {
+    console.log('🔗 URL Validation Event Detected');
     const token = eventBody.plainToken;
     const encryptedToken = crypto.createHmac('sha256', webhookToken).update(token).digest('hex');
+    console.log('🔑 URL Validation Token:', token);
     return res.json({ plainToken: token, encryptedToken });
   }
 
-  console.log('📩 Webhook Event:', event);
+  //console.log(`📩 Webhook Event: ${event}`);
 
   const payload = {
     type: 'webhook',
